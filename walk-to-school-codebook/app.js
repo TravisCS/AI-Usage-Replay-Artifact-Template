@@ -178,6 +178,15 @@
       if (lib && lib.parentNode) lib.parentNode.prepend(lib)
     }
 
+    // Tab labels carry the count of what each pane holds; Chat and Schedule have no natural count.
+    const tabN = (k, n) => { const el = $('tabN-' + k); if (el) el.textContent = String(n) }
+    const cc = cit.counts || {}
+    tabN('agents', D.session.workflow_agent_count || 0)
+    tabN('helpers', (D.helpers && D.helpers.count) || 0)
+    tabN('citations', (cc.web_fetch_unique_urls || 0) + (cc.web_search_unique_queries || 0) + (cc.shell_unique_urls || 0) + LIBRARY.length)
+    tabN('refine', ((D.refinement && D.refinement.questions) || []).length)
+    const stack = document.querySelector('.stack')
+    if (stack && !D.session.workflow_count) stack.classList.add('no-workflows')
     if (R.title) $('pageTitle').textContent = R.title
     $('subtitle').textContent = (R.subtitle ? R.subtitle + '. ' : '') + `${D.session.start_pt} to ${D.session.end_pt}, Pacific time.` + (D.session.title ? ` Session "${D.session.title}".` : '')
     $('footRules').innerHTML = `Tokens: ${esc(D.session.token_rule)} Busy time: ${esc(D.session.busy_rule)} Data made ${esc(D.generated_pt)} by the session-replay skill; README.md next to this page says how to refresh it.`

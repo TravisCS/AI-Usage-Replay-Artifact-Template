@@ -106,13 +106,16 @@ code { font-family: var(--serif); background: var(--pane-2); padding: 0 4px; bor
 .tabs button { background: var(--pane); border: 1px solid var(--line); border-radius: 5px; padding: 6px 10px; flex: 0 0 auto; }
 .tabs button[aria-selected="true"] { background: var(--fg); color: var(--bg); font-weight: 700; }
 .tabclock { flex: 0 0 auto; align-self: center; font-weight: 700; color: var(--accent); padding-right: 4px; }
+.tabs .n { color: var(--muted); font-variant-numeric: tabular-nums; }
+.tabs button[aria-selected="true"] .n { color: inherit; opacity: 0.75; }
 
 /* Panes */
 .panes { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 10px; }
-/* A long helpers list takes at most 45% of the column, so the Schedule pane keeps its room. */
+/* Agents over Helpers in one column: a long helpers list takes at most 45% of it, so the Agents pane keeps its room; with no workflows in the replay, Helpers takes the room instead. */
 .stack { display: grid; grid-template-rows: minmax(0, 1fr) fit-content(45%); gap: 10px; min-width: 0; min-height: 0; height: var(--pane-h); }
 .pane { background: var(--pane); border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; min-width: 0; min-height: 0; height: var(--pane-h); overflow: hidden; }
 .stack .pane { height: auto; }
+.stack.no-workflows { grid-template-rows: fit-content(30%) minmax(0, 1fr); }
 .pane > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--pane-2); }
 .pane > header h2 { font-size: var(--step-1); margin: 0; }
 .pane > header .meta { font-size: var(--small); color: var(--muted); text-align: right; }
@@ -324,47 +327,47 @@ footer p { margin: 0 0 6px; }
 <nav class="tabs" id="tabs" role="tablist" aria-label="Panes">
   <span class="tabclock tnum" id="tabClock"></span>
   <button type="button" role="tab" data-tab="chat" aria-selected="true">Chat</button>
-  <button type="button" role="tab" data-tab="agents" aria-selected="false">Agents</button>
   <button type="button" role="tab" data-tab="schedule" aria-selected="false">Schedule</button>
-  <button type="button" role="tab" data-tab="helpers" aria-selected="false">Helpers</button>
-  <button type="button" role="tab" data-tab="citations" aria-selected="false">Citations</button>
-  <button type="button" role="tab" data-tab="refine" aria-selected="false">Refinement questions</button>
+  <button type="button" role="tab" data-tab="refine" aria-selected="false">Refinement questions <span class="n" id="tabN-refine"></span></button>
+  <button type="button" role="tab" data-tab="citations" aria-selected="false">Citations <span class="n" id="tabN-citations"></span></button>
+  <button type="button" role="tab" data-tab="agents" aria-selected="false">Agents <span class="n" id="tabN-agents"></span></button>
+  <button type="button" role="tab" data-tab="helpers" aria-selected="false">Helpers <span class="n" id="tabN-helpers"></span></button>
 </nav>
 
 <main class="panes" id="panes">
   <section class="pane on" data-pane="chat" aria-label="Chat">
-    <header><h2>Chat</h2><span class="meta" id="chatMeta"></span><p class="desc">What was said, as it stood at this minute: your messages, Claude's replies, and the next-step boxes it showed.</p></header>
-    <div class="body" id="chatBody"></div>
-    <div class="tasklist" id="taskList" hidden></div>
+  <header><h2>Chat</h2><span class="meta" id="chatMeta"></span><p class="desc">What was said, as it stood at this minute: your messages, Claude's replies, and the next-step boxes it showed.</p></header>
+  <div class="body" id="chatBody"></div>
+  <div class="tasklist" id="taskList" hidden></div>
   </section>
-  <section class="pane" data-pane="agents" aria-label="Agents">
-    <header><h2>Agents</h2><span class="meta" id="agentsMeta"></span><p class="desc">Agents started by workflows, grouped by run: what each was asked, how long it ran and how it ended.</p></header>
-    <div class="body" id="agentsBody"></div>
+  <section class="pane schedule-pane" data-pane="schedule" aria-label="Schedule">
+  <header><h2>Schedule</h2><span class="meta" id="schedMeta"></span><p class="desc">The Schedule pane as it stood at this minute: the parts of the work, their time estimates and how far along each was.</p></header>
+  <div class="body" id="schedBody"></div>
+  </section>
+  <section class="pane" data-pane="citations" aria-label="Citations">
+  <header><h2>Citations</h2><span class="meta" id="citeMeta"></span><p class="desc">Where the work drew from: the library of sources it relied on, plus any web pages fetched, searches run and links reached from shell commands.</p></header>
+  <div class="ctabs" role="group" aria-label="Kind of source">
+  <button type="button" data-ctab="pages" aria-pressed="true">Pages</button>
+  <button type="button" data-ctab="searches" aria-pressed="false">Searches</button>
+  <button type="button" data-ctab="shell" aria-pressed="false">Shell links</button>
+  <button type="button" data-ctab="library" aria-pressed="false">Library</button>
+  </div>
+  <div class="cfilter"><input type="search" id="citeFilter" placeholder="Filter by site, words or agent" aria-label="Filter sources"></div>
+  <div class="body" id="citeBody"></div>
   </section>
   <div class="stack">
-    <section class="pane schedule-pane" data-pane="schedule" aria-label="Schedule">
-      <header><h2>Schedule</h2><span class="meta" id="schedMeta"></span><p class="desc">The Schedule pane as it stood at this minute: the parts of the work, their time estimates and how far along each was.</p></header>
-      <div class="body" id="schedBody"></div>
+    <section class="pane" data-pane="agents" aria-label="Agents">
+    <header><h2>Agents</h2><span class="meta" id="agentsMeta"></span><p class="desc">Agents started by workflows, grouped by run: what each was asked, how long it ran and how it ended.</p></header>
+    <div class="body" id="agentsBody"></div>
     </section>
     <section class="pane helpers-pane" data-pane="helpers" aria-label="Helpers">
-      <header><h2>Helpers</h2><span class="meta" id="helpersMeta"></span><p class="desc">Helpers the main session sent off on its own, such as a second coder or a critic: their task, run time and cost.</p></header>
-      <div class="body" id="helpersBody"></div>
+    <header><h2>Helpers</h2><span class="meta" id="helpersMeta"></span><p class="desc">Helpers the main session sent off on its own, such as a second coder or a critic: their task, run time and cost.</p></header>
+    <div class="body" id="helpersBody"></div>
     </section>
   </div>
-  <section class="pane" data-pane="citations" aria-label="Citations">
-    <header><h2>Citations</h2><span class="meta" id="citeMeta"></span><p class="desc">Where the work drew from: the library of sources it relied on, plus any web pages fetched, searches run and links reached from shell commands.</p></header>
-    <div class="ctabs" role="group" aria-label="Kind of source">
-      <button type="button" data-ctab="pages" aria-pressed="true">Pages</button>
-      <button type="button" data-ctab="searches" aria-pressed="false">Searches</button>
-      <button type="button" data-ctab="shell" aria-pressed="false">Shell links</button>
-      <button type="button" data-ctab="library" aria-pressed="false">Library</button>
-    </div>
-    <div class="cfilter"><input type="search" id="citeFilter" placeholder="Filter by site, words or agent" aria-label="Filter sources"></div>
-    <div class="body" id="citeBody"></div>
-  </section>
   <section class="pane refine-pane" data-pane="refine" aria-label="Refinement questions" hidden>
-    <header><h2>Refinement questions</h2><span class="meta" id="refineMeta"></span><p class="desc">Questions Claude asked after the first test runs of the skill, and the answers saved on the review page.</p></header>
-    <div class="body" id="refineBody"></div>
+  <header><h2>Refinement questions</h2><span class="meta" id="refineMeta"></span><p class="desc">Questions Claude asked after the first test runs of the skill, and the answers saved on the review page.</p></header>
+  <div class="body" id="refineBody"></div>
   </section>
 </main>
 
