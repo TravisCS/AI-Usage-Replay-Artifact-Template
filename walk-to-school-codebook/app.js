@@ -180,10 +180,11 @@
 
     // Tab labels carry the count of what each pane holds; Chat and Schedule have no natural count.
     const tabN = (k, n) => { const el = $('tabN-' + k); if (el) el.textContent = String(n) }
-    const cc = cit.counts || {}
     tabN('agents', D.session.workflow_agent_count || 0)
     tabN('helpers', (D.helpers && D.helpers.count) || 0)
-    tabN('citations', (cc.web_fetch_unique_urls || 0) + (cc.web_search_unique_queries || 0) + (cc.shell_unique_urls || 0) + LIBRARY.length)
+    // Sources only, as the pane header counts them: pages read, searches and library entries.
+    // Links reached from shell commands stay in their own sub-tab but are not counted; most are the session's own plumbing.
+    tabN('citations', FETCH.length + SEARCH.length + LIBRARY.length)
     tabN('refine', ((D.refinement && D.refinement.questions) || []).length)
     const stack = document.querySelector('.stack')
     if (stack && !D.session.workflow_count) stack.classList.add('no-workflows')
