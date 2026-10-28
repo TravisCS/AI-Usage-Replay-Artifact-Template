@@ -170,8 +170,13 @@
     SHELL = cit.shell_urls.map(x => ({ ...x, kind: 'shell', tm: ms(x.first) })).sort((a, b) => b.tm - a.tm)
     SEARCH = cit.web_search.map(x => ({ ...x, tm: ms(x.first) })).sort((a, b) => b.tm - a.tm)
     LIBRARY = cit.library.slice().sort((a, b) => String(a.publisher).localeCompare(String(b.publisher)))
-    // Open the Citations pane on the first kind of source that has entries.
-    if (!FETCH.length && !SEARCH.length && !SHELL.length && LIBRARY.length) ui.ctab = 'library'
+    // The Citations pane opens on the Library, where the sources the work relied on are, whenever
+    // the replay has one; the Library button then comes first. Otherwise it opens on the pages fetched.
+    if (LIBRARY.length) {
+      ui.ctab = 'library'
+      const lib = document.querySelector('[data-ctab="library"]')
+      if (lib && lib.parentNode) lib.parentNode.prepend(lib)
+    }
 
     if (R.title) $('pageTitle').textContent = R.title
     $('subtitle').textContent = (R.subtitle ? R.subtitle + '. ' : '') + `${D.session.start_pt} to ${D.session.end_pt}, Pacific time.` + (D.session.title ? ` Session "${D.session.title}".` : '')

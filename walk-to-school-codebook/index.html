@@ -113,9 +113,11 @@ code { font-family: var(--serif); background: var(--pane-2); padding: 0 4px; bor
 .stack { display: grid; grid-template-rows: minmax(0, 1fr) fit-content(45%); gap: 10px; min-width: 0; min-height: 0; height: var(--pane-h); }
 .pane { background: var(--pane); border: 1px solid var(--line); border-radius: 8px; display: flex; flex-direction: column; min-width: 0; min-height: 0; height: var(--pane-h); overflow: hidden; }
 .stack .pane { height: auto; }
-.pane > header { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--pane-2); }
+.pane > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--pane-2); }
 .pane > header h2 { font-size: var(--step-1); margin: 0; }
 .pane > header .meta { font-size: var(--small); color: var(--muted); text-align: right; }
+/* One plain-words line under each pane title saying what the pane shows (about 10 point). */
+.pane > header .desc { flex: 1 1 100%; margin: 0; font-size: 13px; line-height: 1.3; color: var(--muted); }
 .body { overflow-y: auto; overflow-x: hidden; padding: 10px 12px; flex: 1 1 auto; min-height: 0; }
 :root { --pane-h: max(480px, calc(100vh - var(--sticky-h, 160px) - 40px)); }
 
@@ -331,26 +333,26 @@ footer p { margin: 0 0 6px; }
 
 <main class="panes" id="panes">
   <section class="pane on" data-pane="chat" aria-label="Chat">
-    <header><h2>Chat</h2><span class="meta" id="chatMeta"></span></header>
+    <header><h2>Chat</h2><span class="meta" id="chatMeta"></span><p class="desc">What was said, as it stood at this minute: your messages, Claude's replies, and the next-step boxes it showed.</p></header>
     <div class="body" id="chatBody"></div>
     <div class="tasklist" id="taskList" hidden></div>
   </section>
   <section class="pane" data-pane="agents" aria-label="Agents">
-    <header><h2>Agents</h2><span class="meta" id="agentsMeta"></span></header>
+    <header><h2>Agents</h2><span class="meta" id="agentsMeta"></span><p class="desc">Agents started by workflows, grouped by run: what each was asked, how long it ran and how it ended.</p></header>
     <div class="body" id="agentsBody"></div>
   </section>
   <div class="stack">
     <section class="pane schedule-pane" data-pane="schedule" aria-label="Schedule">
-      <header><h2>Schedule</h2><span class="meta" id="schedMeta"></span></header>
+      <header><h2>Schedule</h2><span class="meta" id="schedMeta"></span><p class="desc">The Schedule pane as it stood at this minute: the parts of the work, their time estimates and how far along each was.</p></header>
       <div class="body" id="schedBody"></div>
     </section>
     <section class="pane helpers-pane" data-pane="helpers" aria-label="Helpers">
-      <header><h2>Helpers</h2><span class="meta" id="helpersMeta"></span></header>
+      <header><h2>Helpers</h2><span class="meta" id="helpersMeta"></span><p class="desc">Helpers the main session sent off on its own, such as a second coder or a critic: their task, run time and cost.</p></header>
       <div class="body" id="helpersBody"></div>
     </section>
   </div>
   <section class="pane" data-pane="citations" aria-label="Citations">
-    <header><h2>Citations</h2><span class="meta" id="citeMeta"></span></header>
+    <header><h2>Citations</h2><span class="meta" id="citeMeta"></span><p class="desc">Where the work drew from: the library of sources it relied on, plus any web pages fetched, searches run and links reached from shell commands.</p></header>
     <div class="ctabs" role="group" aria-label="Kind of source">
       <button type="button" data-ctab="pages" aria-pressed="true">Pages</button>
       <button type="button" data-ctab="searches" aria-pressed="false">Searches</button>
@@ -361,7 +363,7 @@ footer p { margin: 0 0 6px; }
     <div class="body" id="citeBody"></div>
   </section>
   <section class="pane refine-pane" data-pane="refine" aria-label="Refinement questions" hidden>
-    <header><h2>Refinement questions</h2><span class="meta" id="refineMeta"></span></header>
+    <header><h2>Refinement questions</h2><span class="meta" id="refineMeta"></span><p class="desc">Questions Claude asked after the first test runs of the skill, and the answers saved on the review page.</p></header>
     <div class="body" id="refineBody"></div>
   </section>
 </main>
