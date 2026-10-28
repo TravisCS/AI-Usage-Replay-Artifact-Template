@@ -1,0 +1,127 @@
+<meta charset="utf-8">
+<title>Claude Replays</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: one column of session cards, newest first, in the replay pages' own dark look. */
+:root {
+  color-scheme: dark;
+  --bg: #262624;
+  --pane: #2f2f2c;
+  --pane-2: #383834;
+  --line: #4a4843;
+  --fg: #f1efe7;
+  --muted: #b2aea3;
+  --faint: #a09d93;
+  --accent: #d97757;
+  --link: #6cb6ff;
+  --ok: #3fb950;
+  --warn: #e3b341;
+  --serif: "Times New Roman", Times, serif;
+  --step-0: 17px;
+  --step-1: 20px;
+  --step-2: 26px;
+  --step-3: 34px;
+  --small: 14px;
+}
+[hidden] { display: none !important; }
+html, body { background: var(--bg); color: var(--fg); }
+body {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: var(--step-0);
+  line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 32px;
+  overflow-x: hidden;
+}
+a { color: var(--link); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 980px; margin: 0 auto; }
+header.top { padding-block: 22px 10px; border-bottom: 1px solid var(--line); margin-bottom: 18px; display: grid; gap: 4px; }
+header.top h1 { font-size: var(--step-3); margin: 0; text-wrap: balance; }
+header.top p { margin: 0; color: var(--muted); max-width: 70ch; }
+.count { color: var(--accent); }
+.list { display: grid; gap: 14px; }
+.card { background: var(--pane); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; min-width: 0; }
+.card h2 { font-size: var(--step-2); margin: 0; line-height: 1.15; text-wrap: balance; overflow-wrap: anywhere; }
+.card h2 a { color: var(--fg); text-decoration: none; }
+.card h2 a:hover { text-decoration: underline; }
+.sub { color: var(--muted); margin: 0; overflow-wrap: anywhere; }
+.when { font-size: var(--small); color: var(--faint); letter-spacing: 0.04em; text-transform: uppercase; overflow-wrap: anywhere; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 2px 0 0; }
+.stat { background: var(--pane-2); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; min-width: 0; }
+.stat dt { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.stat dd { margin: 0; font-size: var(--step-1); font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.stat dd small { display: block; font-size: var(--small); font-weight: 400; color: var(--muted); }
+.links { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: var(--small); align-items: baseline; }
+.links .btn { background: var(--accent); color: #1a1a1a; border-radius: 5px; padding: 4px 12px; text-decoration: none; font-weight: 700; }
+.links .muted { color: var(--muted); }
+.empty { color: var(--muted); font-style: italic; }
+.warn { color: var(--warn); font-size: var(--small); margin: 0; }
+footer { margin-top: 24px; color: var(--muted); font-size: var(--small); max-width: 75ch; }
+@media (max-width: 640px) {
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  header.top h1 { font-size: var(--step-2); }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>Claude Replays</h1>
+    <p>Recaps of Claude Code sessions, one per project or long build night. Open one to scrub through the chat, the agents, the Schedule pane, the sources read and the commits, minute by minute. <span class="count" id="count"></span></p>
+  </header>
+  <main class="list" id="list"><p class="empty">Loading the shelf...</p></main>
+  <footer id="foot"></footer>
+</div>
+
+<script src="shelf.js"></script>
+<script>
+(function () {
+  'use strict'
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
+  const fmt = n => Number(n || 0).toLocaleString('en-US')
+  const span = m => { m = Math.round(m || 0); return m < 60 ? `${m} min` : `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min` }
+  const yearOf = iso => { try { return new Intl.DateTimeFormat('en-US', { timeZone: 'America/Los_Angeles', year: 'numeric' }).format(new Date(iso)) } catch (e) { return '' } }
+  // This page always sits beside the replay folders (on the Mac, a local web server or a
+  // static host such as GitHub Pages), so the cards link to the local pages. The online
+  // copy of the shelf is shelf_online.html, which links to the private artifacts instead.
+  const local = true
+  const onDisk = location.protocol === 'file:'
+  const items = Array.isArray(window.SHELF) ? window.SHELF.slice() : []
+  items.sort((a, b) => String(b.start || '').localeCompare(String(a.start || '')))
+  const list = document.getElementById('list')
+  document.getElementById('count').textContent = items.length ? `${items.length} replay${items.length === 1 ? '' : 's'}, newest first.` : ''
+  if (!items.length) {
+    list.innerHTML = '<p class="empty">No replays yet. Ask Claude for a replay of a session, and the session-replay skill adds it here.</p>'
+  } else {
+    list.innerHTML = items.map(e => {
+      const localHref = encodeURIComponent(e.folder) + '/' + encodeURI(e.page || 'index.html')
+      const main = local ? localHref : (e.artifact_url || '')
+      const titleHtml = main ? `<a href="${esc(main)}"${local ? '' : ' target="_blank" rel="noopener"'}>${esc(e.title)}</a>` : esc(e.title)
+      const agents = (e.agents || 0) + (e.helpers || 0)
+      const links = []
+      if (local) links.push(`<a class="btn" href="${esc(localHref)}">Open the replay</a>`)
+      if (e.artifact_url) links.push(`<a href="${esc(e.artifact_url)}" target="_blank" rel="noopener">Online copy (private)</a>`)
+      else if (onDisk) links.push('<span class="muted">No online copy yet</span>')
+      if (!local) links.push(`<span class="muted">Folder on the Mac: Claude Replays/${esc(e.folder)}</span>`)
+      return `<article class="card">` +
+        `<div class="when">${esc(e.project)}${e.project ? ', ' : ''}${esc(e.start_pt)} to ${esc(e.end_pt)}, ${esc(yearOf(e.start))}, Pacific time</div>` +
+        `<h2>${titleHtml}</h2>` +
+        (e.subtitle ? `<p class="sub">${esc(e.subtitle)}</p>` : '') +
+        `<dl class="stats">` +
+        `<div class="stat"><dt>Busy time</dt><dd>${esc(span(e.busy_minutes))}<small>${esc(span(e.wall_minutes))} on the clock</small></dd></div>` +
+        `<div class="stat"><dt>Agents</dt><dd>${fmt(agents)}<small>${fmt(e.workflows)} workflow${e.workflows === 1 ? '' : 's'}, ${fmt(e.helpers)} helper${e.helpers === 1 ? '' : 's'}</small></dd></div>` +
+        `<div class="stat"><dt>Output tokens</dt><dd>${fmt(e.output_tokens)}<small>${fmt(e.total_tokens)} with input and cache</small></dd></div>` +
+        `<div class="stat"><dt>Commits</dt><dd>${e.has_git === false ? 'no git' : fmt(e.commits)}<small>${fmt(e.user_messages)} message${e.user_messages === 1 ? '' : 's'} from you</small></dd></div>` +
+        `</dl>` +
+        ((e.checks_failed || []).length ? `<p class="warn">A check failed when it was built (${esc(e.checks_failed.map(k => ({ tokens_match: 'token totals', workflows_ok: 'workflow agent counts' })[k] || k).join(', '))}); its README.md says which.</p>` : '') +
+        `<div class="links">${links.join('')}</div>` +
+        `</article>`
+    }).join('')
+  }
+  document.getElementById('foot').textContent = onDisk
+    ? 'This shelf lives in the Claude Replays folder in Documents. Each replay opens from its own folder by double click; the online copies are private claude.ai artifacts.'
+    : 'Each replay opens from its own folder beside this page. Online copies, where a card has one, are private claude.ai artifacts.'
+})()
+</script>
