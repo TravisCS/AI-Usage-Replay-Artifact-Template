@@ -903,6 +903,7 @@
   // ---- the jungle ----
   function drawJungle() {
     const wrap = $('jungle')
+    if (!wrap) return
     const hidden = store.get('jungle') === '0'
     wrap.dataset.hidden = hidden ? '1' : '0'
     $('jungleToggle').textContent = hidden ? 'Show jungle' : 'Hide jungle'
@@ -1003,7 +1004,7 @@
     document.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)))
     document.querySelectorAll('[data-ctab]').forEach(b => b.addEventListener('click', () => { ui.ctab = b.dataset.ctab; ui.limit = 150; renderCitations(true) }))
     $('citeFilter').addEventListener('input', e => { ui.filter = e.target.value; ui.limit = 150; renderCitations(true) })
-    $('jungleToggle').addEventListener('click', () => {
+    if ($('jungleToggle')) $('jungleToggle').addEventListener('click', () => {
       const hidden = $('jungle').dataset.hidden === '1'
       store.set('jungle', hidden ? '1' : '0')
       ui.jungleW = null
